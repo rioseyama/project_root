@@ -1,0 +1,37 @@
+version: "3.8" # Docker Compose のバージョン指定
+
+services:
+  web: # Webアプリケーション用サービス（例：PHP＋Apache）
+    build:
+      context: . # Dockerfile があるディレクトリ
+      dockerfile: Dockerfile # 使用する Dockerfile の名前
+    ports:
+      - "8080:80" # ホストの8080番をコンテナの80番にマッピング（例：http://localhost:8080）
+    volumes:
+      - ./src:/var/www/html # ホストの src フォルダをコンテナのドキュメントルートにマウント
+    depends_on:
+      - db # db サービス（MySQL）に依存。webより先に起動させる
+
+  db: # データベースサービス（MySQL）
+    image: mysql:5.7 # 使用する MySQL イメージのバージョン
+    environment:
+      MYSQL_ROOT_PASSWORD: example # root ユーザーのパスワード
+      MYSQL_DATABASE: example_db # 初期作成するデータベース名
+      MYSQL_USER: user # 新規作成するユーザー名
+      MYSQL_PASSWORD: password # 上記ユーザーのパスワード
+    ports:
+      - "3306:3306" # ホストの3306番をコンテナのMySQLポートにマッピング
+    volumes:
+      - db_data:/var/lib/mysql # 永続化のためのボリューム。MySQLのデータを保存する
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: example
+
+volumes:
+  db_data: # MySQL 用の永続化ボリューム定義（コンテナ削除後もデータ保持）
